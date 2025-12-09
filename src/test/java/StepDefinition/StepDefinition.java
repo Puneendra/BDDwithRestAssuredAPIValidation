@@ -15,96 +15,75 @@ import org.junit.Assert;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StepDefinition
-{
-    ResponseSpecification responseaobj;
-    RequestSpecification aobj;
+public class StepDefinition {
+
+    ResponseSpecification responseSpec;
+    RequestSpecification reqSpec;
+    AddLocation location1;
     JsonPath js;
 
     @Given("create api request for adding a location")
-    public void creatingApiRequest()
-    {
+    public void creatingApiRequest() {
+
         RestAssured.baseURI = "https://rahulshettyacademy.com";
-        AddLocation location1 = new AddLocation();
-        LocationDetails locationaobj = new LocationDetails();
 
-        locationaobj.setLat(-38.383494);
-        locationaobj.setLng(33.427362);
-        location1.setLocation(locationaobj);
-
-
+        location1 = new AddLocation();
+        LocationDetails locationDetails = new LocationDetails();
+        locationDetails.setLat(-38.383494);
+        locationDetails.setLng(33.427362);
+        location1.setLocation(locationDetails);
         location1.setAccuracy(50);
         location1.setName("Puneendra");
         location1.setPhone_number("7337238146");
         location1.setAddress("Puneendra from hyderabad");
 
-
         List<String> types = new ArrayList<>();
         types.add("Temple");
-        types.add("Naidu street ");
+        types.add("Naidu street");
         location1.setTypes(types);
 
         location1.setWebsite("http://google.com");
         location1.setLanguage("Telugu");
 
-        System.out.println(location1);
-
-         aobj = new RequestSpecBuilder()
+        reqSpec = new RequestSpecBuilder()
                 .setBaseUri("https://rahulshettyacademy.com")
                 .addQueryParam("key", "qaclick123")
-                .setContentType(ContentType.JSON).build();
+                .setContentType(ContentType.JSON)
+                .build();
 
-
-         responseaobj = new ResponseSpecBuilder()
+        responseSpec = new ResponseSpecBuilder()
                 .expectStatusCode(200)
-                .expectContentType(ContentType.JSON).build();
-
-
-        String responseResult =responseaobj
-
-
-                .when()
-                .post("/maps/api/place/add/json")
-
-                .then().spec(responseaobj)
-                .log().all().extract().asString();
+                .expectContentType(ContentType.JSON)
+                .build();
     }
+
     @When("Do post call with query peramaters")
     public void CallingAPI() {
-        String responseResult =responseaobj
 
-
+        String responseResult = RestAssured.given()
+                .spec(reqSpec)
+                .body(location1)
                 .when()
                 .post("/maps/api/place/add/json")
+                .then()
+                .spec(responseSpec)
+                .log().all()
+                .extract()
+                .asString();
 
-                .then().spec(responseaobj)
-                .log().all().extract().asString();
         System.out.println("Response: " + responseResult);
-
-         js = new JsonPath(responseResult);
+        js = new JsonPath(responseResult);
     }
-
 
     @Then("Verify status as OK")
-    public void verify_status_as_ok()
-    {
-//        String id = js.getString("id");
-//        String placeid = js.getString("place_id");
-//
-//        System.out.println("ID: " + id);
-//        System.out.println("Place ID: " + placeid);
-
-String ActualStatus = js.getString("status");
-        Assert.assertEquals(ActualStatus,"OK","Status code is not correct in respone code");
-
+    public void verify_status_as_ok() {
+        String actualStatus = js.getString("status");
+        Assert.assertEquals("Status code is not correct in response", "OK", actualStatus);
     }
+
     @And("also verify scope as APP")
     public void also_verify_scope_as_app() {
-
-        String ActualScope = js.getString("scope");
-        Assert.assertEquals(ActualScope,"APP","Scope is not correct in respone code");
-
-
-
+        String actualScope = js.getString("scope");
+        Assert.assertEquals("Scope value is not correct in response", "APP", actualScope);
     }
 }
